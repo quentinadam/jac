@@ -26,9 +26,8 @@ deno task serve   # builds, then serves dist/ on http://localhost:8000
 `.github/workflows/pages.yml` builds on every push and pull request, and deploys to GitHub Pages when the pushed branch
 is the repository's default branch.
 
-To turn the site on, in **Settings → Pages → Build and deployment**, set **Source** to **GitHub Actions**. Nothing else
-needs changing — the workflow already requests the `pages: write` and `id-token: write` permissions it needs, and
-creates the `github-pages` environment on its first run.
+Pages is enabled with **Settings → Pages → Source** set to **GitHub Actions**. The workflow requests the `pages: write`
+and `id-token: write` permissions itself, so nothing else needs granting.
 
-The site is then served at https://quentinadam.github.io/jac/. All asset paths are relative, so the project sub-path
-works without extra configuration.
+The site is served at https://quentinadam.github.io/jac/. All asset paths are relative, so the project sub-path works
+without extra configuration.

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hello, world</title>
+    <meta name="description" content="A single page that shows the current time." />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <main class="clock">
+      <p class="eyebrow">Hello, world</p>
+      <p class="date" id="date">&nbsp;</p>
+      <time class="time" id="time">--:--:--</time>
+      <div class="ticks" id="ticks" aria-hidden="true"></div>
+      <p class="zone" id="zone">&nbsp;</p>
+    </main>
+    <footer class="colophon">
+      TypeScript bundled with <code>Deno.bundle()</code>, served by GitHub Pages
+    </footer>
+  </body>
+</html>

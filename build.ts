@@ -1,9 +1,14 @@
 /**
- * Builds the site into `dist/`: `src/main.ts` is bundled to `dist/main.js` with
- * `Deno.bundle()`, and everything in `static/` is copied alongside it.
+ * Builds the site into `dist/`.
+ *
+ * Pages are rendered from the templates in `src/site/`, `src/main.ts` is bundled
+ * to `dist/main.js` with `Deno.bundle()`, and `static/` is copied over the top.
  *
  * Run with `deno task build`.
  */
+
+import { render } from './src/site/layout.ts';
+import { pages } from './src/site/pages.ts';
 
 const outputDir = 'dist';
 
@@ -34,10 +39,23 @@ if (!result.success) {
 }
 
 await Deno.mkdir(outputDir, { recursive: true });
-for await (const entry of Deno.readDir('static')) {
-  if (entry.isFile) {
-    await Deno.copyFile(`static/${entry.name}`, `${outputDir}/${entry.name}`);
+
+/** Copies `static/` into `dist/`, keeping the directory structure. */
+async function copyTree(from: string, to: string) {
+  await Deno.mkdir(to, { recursive: true });
+  for await (const entry of Deno.readDir(from)) {
+    if (entry.isDirectory) {
+      await copyTree(`${from}/${entry.name}`, `${to}/${entry.name}`);
+    } else if (entry.isFile) {
+      await Deno.copyFile(`${from}/${entry.name}`, `${to}/${entry.name}`);
+    }
   }
 }
 
-console.log(`built ${outputDir}/`);
+await copyTree('static', outputDir);
+
+for (const page of pages) {
+  await Deno.writeTextFile(`${outputDir}/${page.file}`, render(page));
+}
+
+console.log(`built ${outputDir}/ — ${pages.length} pages`);

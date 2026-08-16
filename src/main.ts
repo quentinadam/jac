@@ -1,70 +1,240 @@
 /**
- * Renders the current local time and keeps it in step with the system clock.
+ * The site's behaviour: the masthead menus, the mobile drawer, scroll reveals,
+ * the family navigation's current-section marker, and the quote form.
  *
- * The clock re-renders on the second boundary rather than on a fixed 1000 ms
- * interval, so it never drifts a fraction of a second behind the wall clock.
+ * Everything here is progressive: without JavaScript the pages still read, the
+ * menus fall back to the range pages they link to, and the form still validates.
  */
 
-const SECONDS_PER_MINUTE = 60;
+const DESKTOP = '(min-width: 62rem)';
 
-function element<T extends HTMLElement>(id: string): T {
-  const node = document.getElementById(id);
-  if (node === null) {
-    throw new Error(`Missing element #${id}`);
+/* ---------------------------------------------------------------- masthead */
+
+const masthead = document.querySelector<HTMLElement>('[data-masthead]');
+const menuItems = Array.from(document.querySelectorAll<HTMLElement>('[data-has-menu]'));
+
+function menuParts(item: HTMLElement) {
+  const trigger = item.querySelector<HTMLButtonElement>('.mainnav__toggle');
+  const panel = item.querySelector<HTMLElement>('.megamenu');
+  return trigger && panel ? { trigger, panel } : null;
+}
+
+function setMenu(item: HTMLElement, open: boolean) {
+  const parts = menuParts(item);
+  if (!parts) {
+    return;
   }
-  return node as T;
+  parts.trigger.setAttribute('aria-expanded', String(open));
+  parts.panel.hidden = !open;
+  item.classList.toggle('is-open', open);
 }
 
-const dateOutput = element('date');
-const timeOutput = element<HTMLTimeElement>('time');
-const zoneOutput = element('zone');
-const ticksOutput = element('ticks');
-
-const dateFormat = new Intl.DateTimeFormat(undefined, {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
-
-const timeFormat = new Intl.DateTimeFormat(undefined, {
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: false,
-});
-
-/** Builds the minute bar: one tick per second, filled as the minute elapses. */
-const ticks = Array.from({ length: SECONDS_PER_MINUTE }, () => {
-  const tick = document.createElement('span');
-  tick.className = 'tick';
-  ticksOutput.append(tick);
-  return tick;
-});
-
-/** `2026-08-15T23:07:42` — the local time, in the format the `datetime` attribute expects. */
-function toDateTimeAttribute(date: Date): string {
-  const pad = (value: number) => value.toString().padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
-    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-}
-
-function render(date: Date) {
-  dateOutput.textContent = dateFormat.format(date);
-  timeOutput.textContent = timeFormat.format(date);
-  timeOutput.dateTime = toDateTimeAttribute(date);
-
-  const seconds = date.getSeconds();
-  for (const [index, tick] of ticks.entries()) {
-    tick.dataset.state = index === seconds ? 'now' : index < seconds ? 'past' : 'future';
+function closeMenus(except?: HTMLElement) {
+  for (const item of menuItems) {
+    if (item !== except) {
+      setMenu(item, false);
+    }
   }
 }
 
-function tick() {
-  const now = new Date();
-  render(now);
-  setTimeout(tick, 1000 - now.getMilliseconds());
+for (const item of menuItems) {
+  const parts = menuParts(item);
+  if (!parts) {
+    continue;
+  }
+
+  parts.trigger.addEventListener('click', () => {
+    const open = parts.trigger.getAttribute('aria-expanded') === 'true';
+    closeMenus(item);
+    setMenu(item, !open);
+  });
+
+  // On a mouse, the panels behave like menus; on touch and on mobile, like accordions.
+  item.addEventListener('pointerenter', (event) => {
+    if (event.pointerType === 'mouse' && matchMedia(DESKTOP).matches) {
+      closeMenus(item);
+      setMenu(item, true);
+    }
+  });
+
+  item.addEventListener('pointerleave', (event) => {
+    if (event.pointerType === 'mouse' && matchMedia(DESKTOP).matches) {
+      setMenu(item, false);
+    }
+  });
+
+  item.addEventListener('focusout', () => {
+    if (matchMedia(DESKTOP).matches) {
+      requestAnimationFrame(() => {
+        if (!item.contains(document.activeElement)) {
+          setMenu(item, false);
+        }
+      });
+    }
+  });
 }
 
-zoneOutput.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
-tick();
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    closeMenus();
+    setDrawer(false);
+  }
+});
+
+document.addEventListener('click', (event) => {
+  const target = event.target;
+  if (target instanceof Node && masthead && !masthead.contains(target)) {
+    closeMenus();
+  }
+});
+
+/* ------------------------------------------------------------ mobile drawer */
+
+const drawerToggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
+
+function setDrawer(open: boolean) {
+  if (!drawerToggle) {
+    return;
+  }
+  drawerToggle.setAttribute('aria-expanded', String(open));
+  document.body.classList.toggle('is-drawer-open', open);
+  if (!open) {
+    closeMenus();
+  }
+}
+
+drawerToggle?.addEventListener('click', () => {
+  setDrawer(drawerToggle.getAttribute('aria-expanded') !== 'true');
+});
+
+for (const link of document.querySelectorAll('.mainnav a')) {
+  link.addEventListener('click', () => setDrawer(false));
+}
+
+matchMedia(DESKTOP).addEventListener('change', () => {
+  setDrawer(false);
+  closeMenus();
+});
+
+/* --------------------------------------------------------- scrolled header */
+
+const onScroll = () => masthead?.classList.toggle('is-scrolled', globalThis.scrollY > 8);
+onScroll();
+globalThis.addEventListener('scroll', onScroll, { passive: true });
+
+/* ------------------------------------------------------------ reveals */
+
+const revealable = document.querySelectorAll<HTMLElement>('[data-reveal]');
+const stillness = matchMedia('(prefers-reduced-motion: reduce)');
+
+if (stillness.matches || !('IntersectionObserver' in globalThis)) {
+  for (const node of revealable) {
+    node.classList.add('is-revealed');
+  }
+} else {
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-revealed');
+        observer.unobserve(entry.target);
+      }
+    }
+  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+
+  for (const node of revealable) {
+    observer.observe(node);
+  }
+}
+
+/* ------------------------------------------- family navigation, current link */
+
+const familyNav = document.querySelector<HTMLElement>('.familynav__inner');
+
+if (familyNav) {
+  const links = Array.from(familyNav.querySelectorAll('a'))
+    .map((link) => ({ link, section: document.getElementById(link.hash.slice(1)) }))
+    .filter((entry): entry is { link: HTMLAnchorElement; section: HTMLElement } => entry.section !== null);
+
+  // The current family is the last one whose top has passed the navigation bar;
+  // above the first one, nothing is current.
+  let marked: HTMLAnchorElement | null = null;
+
+  const markCurrent = () => {
+    const line = familyNav.getBoundingClientRect().bottom + 8;
+    let current: HTMLAnchorElement | null = null;
+    for (const { link, section } of links) {
+      if (section.getBoundingClientRect().top <= line) {
+        current = link;
+      }
+    }
+    if (current === marked) {
+      return;
+    }
+    marked = current;
+    for (const { link } of links) {
+      link.classList.toggle('is-current', link === current);
+    }
+    // Keep the current chip in view in the horizontally scrolling bar.
+    if (current) {
+      const bar = familyNav.getBoundingClientRect();
+      const chip = current.getBoundingClientRect();
+      if (chip.left < bar.left || chip.right > bar.right) {
+        familyNav.scrollBy({ left: chip.left - bar.left - 16, behavior: 'smooth' });
+      }
+    }
+  };
+
+  markCurrent();
+  globalThis.addEventListener('scroll', markCurrent, { passive: true });
+  globalThis.addEventListener('resize', markCurrent, { passive: true });
+}
+
+/* ---------------------------------------------------------------- the form */
+
+const form = document.querySelector<HTMLFormElement>('[data-quote-form]');
+
+form?.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  for (const invalid of form.querySelectorAll('.is-invalid')) {
+    invalid.classList.remove('is-invalid');
+  }
+
+  if (!form.checkValidity()) {
+    const fields = form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+      'input, select, textarea',
+    );
+    for (const field of fields) {
+      field.closest('.field')?.classList.toggle('is-invalid', !field.checkValidity());
+    }
+    form.querySelector<HTMLElement>('.is-invalid input, .is-invalid select, .is-invalid textarea')?.focus();
+    return;
+  }
+
+  const data = new FormData(form);
+  const value = (name: string) => String(data.get(name) ?? '').trim();
+
+  const lines = [
+    `Name: ${value('name')}`,
+    `Company: ${value('company') || '—'}`,
+    `Email: ${value('email')}`,
+    `Phone: ${value('phone') || '—'}`,
+    `Country: ${value('country')}`,
+    `Looking for: ${value('subject')}`,
+    '',
+    value('message') || '(no message)',
+  ];
+
+  const subject = `Enquiry — ${value('subject')}`;
+  const href = `mailto:info@jac-machines.com?subject=${encodeURIComponent(subject)}&body=${
+    encodeURIComponent(lines.join('\n'))
+  }`;
+
+  const note = form.querySelector<HTMLElement>('[data-form-note]');
+  if (note) {
+    note.textContent = 'Your email client should now be open with the request ready to send.';
+    note.classList.add('is-sent');
+  }
+
+  globalThis.location.href = href;
+});

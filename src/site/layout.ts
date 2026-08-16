@@ -189,6 +189,7 @@ export const render = (page: Page) =>
     <link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="styles.css" />
+    <script>document.documentElement.classList.add('js');</script>
     <script type="module" src="main.js"></script>
   </head>
   <body data-page="${page.id}">

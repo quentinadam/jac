@@ -67,6 +67,7 @@ const news = [
     title: 'Meet the Easyform',
     text: 'A new lever-operated divider joins the divider-moulder range — compact, simple, and grid-compatible.',
     image: 'easyform',
+    product: true,
   },
 ];
 
@@ -221,7 +222,7 @@ const body = `
         <div class="shell cta__inner">
           <div>
             <p class="eyebrow eyebrow--light">Warranty</p>
-            <h2>Five years of parts cover, on the house.</h2>
+            <h2>Five years of parts cover, included.</h2>
             <p>Register your machine and your warranty runs for five years on parts, wear items excepted. Have the machine or its manual to hand — you will need the serial number.</p>
           </div>
           <div class="cta__actions">
@@ -244,7 +245,7 @@ const body = `
   news
     .map((item) => `
             <article class="newscard" data-reveal>
-              <div class="newscard__shot">
+              <div class="newscard__shot${'product' in item && item.product ? ' newscard__shot--product' : ''}">
                 <img src="assets/photos/${item.image}.webp" alt="" width="1200" height="676" loading="lazy" />
               </div>
               <p class="newscard__date">${item.date}</p>

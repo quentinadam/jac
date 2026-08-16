@@ -850,6 +850,7 @@ p {
   border-radius: var(--radius);
   background: var(--paper);
   overflow: hidden;
+  text-decoration: none;
   transition: border-color 200ms ease, box-shadow 260ms ease, transform 260ms ease, opacity 620ms ease;
 }
 
@@ -928,6 +929,32 @@ p {
   height: 4px;
   border-radius: 50%;
   background: var(--red);
+}
+
+.machine__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 1rem;
+  font-family: var(--display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-3);
+  transition: color 160ms ease;
+}
+
+.machine__cta .arrow {
+  width: 0.875rem;
+  transition: transform 200ms ease;
+}
+
+.machine:hover .machine__cta,
+.machine:focus-visible .machine__cta {
+  color: var(--red);
+}
+
+.machine:hover .machine__cta .arrow {
+  transform: translateX(3px);
 }
 
 /* --------------------------------------------------------- family blocks */
@@ -1367,6 +1394,13 @@ p {
 .quoteform abbr {
   color: var(--red);
   text-decoration: none;
+}
+
+.quoteform__intro [data-form-machine]:not(:empty) {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-weight: 500;
+  color: var(--ink);
 }
 
 .fields {

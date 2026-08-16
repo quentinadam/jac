@@ -45,7 +45,9 @@ const body = `
         <div class="shell contact">
           <form class="quoteform" data-quote-form novalidate>
             <h2>Request a quote</h2>
-            <p class="quoteform__intro">Fields marked <abbr title="required">*</abbr> are required.</p>
+            <p class="quoteform__intro">
+              <span data-form-machine></span> Fields marked <abbr title="required">*</abbr> are required.
+            </p>
             <div class="fields">
               ${field({ id: 'name', label: 'Name', required: true, autocomplete: 'name' })}
               ${field({ id: 'company', label: 'Company', autocomplete: 'organization' })}

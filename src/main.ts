@@ -193,6 +193,24 @@ if (familyNav) {
 
 const form = document.querySelector<HTMLFormElement>('[data-quote-form]');
 
+// A machine card links here as `contact.html?machine=Pico`, so the form can open
+// with the enquiry already written.
+if (form) {
+  const machine = new URL(globalThis.location.href).searchParams.get('machine');
+  const message = form.querySelector<HTMLTextAreaElement>('#message');
+  const subject = form.querySelector<HTMLSelectElement>('#subject');
+
+  if (machine && message && !message.value) {
+    message.value = `I would like a quote for the ${machine}. `;
+    if (subject) {
+      subject.value = 'A quotation';
+    }
+    form.querySelector<HTMLElement>('[data-form-machine]')?.replaceChildren(
+      `Your enquiry is about the ${machine}.`,
+    );
+  }
+}
+
 form?.addEventListener('submit', (event) => {
   event.preventDefault();
 

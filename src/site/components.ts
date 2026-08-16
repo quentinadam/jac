@@ -17,8 +17,9 @@ export const sectionHead = (
           ${lead ? `<p class="lead">${lead}</p>` : ''}
         </header>`;
 
+/** Each card is a link to the quote form, which prefills itself from the query. */
 export const machineCard = (machine: Machine, label?: string) => `
-          <article class="machine" data-reveal>
+          <a class="machine" href="contact.html?machine=${encodeURIComponent(machine.name)}#quote" data-reveal>
             <div class="machine__shot">
               <img src="assets/machines/${machine.slug}.webp" alt="JAC ${machine.name}" width="760" height="760" loading="lazy" decoding="async" />
             </div>
@@ -29,8 +30,9 @@ export const machineCard = (machine: Machine, label?: string) => `
               <ul class="machine__specs">
                 ${machine.bullets.map((bullet) => `<li>${bullet}</li>`).join('\n                ')}
               </ul>
+              <span class="machine__cta">Request a quote${'<svg class="arrow" viewBox="0 0 16 12" aria-hidden="true"><path d="M1 6h13M9.5 1.5 14 6l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'}</span>
             </div>
-          </article>`;
+          </a>`;
 
 /** One family of machines: a header with the family shot, then the machines themselves. */
 export const familySection = (family: Family, index: number) => `

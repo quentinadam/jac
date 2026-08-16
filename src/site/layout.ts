@@ -1,6 +1,25 @@
 /** The shell every page is rendered into: document head, masthead, footer. */
 
-import { familiesInRange, machinesInFamily } from './data.ts';
+import { familiesInRange, machinesInFamily, offices } from './data.ts';
+
+/** Where the built site lives, for the absolute URLs link previews need. */
+export const origin = 'https://quentinadam.github.io/jac/';
+
+const organisation = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'JAC',
+  url: origin,
+  logo: `${origin}assets/logo-jac.svg`,
+  foundingDate: '1946',
+  description: 'Manufacturer of professional bread slicers and dough processing machines, founded in Liège in 1946.',
+  address: offices.map((office) => ({
+    '@type': 'PostalAddress',
+    streetAddress: office.lines[0],
+    addressLocality: office.city,
+    addressCountry: office.country,
+  })),
+});
 
 export type PageId = 'home' | 'slicing' | 'dough' | 'company' | 'contact';
 
@@ -157,6 +176,15 @@ export const render = (page: Page) =>
     <title>${page.title}</title>
     <meta name="description" content="${page.description}" />
     <meta name="theme-color" content="#ffffff" />
+    <link rel="canonical" href="${origin}${page.file}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="JAC" />
+    <meta property="og:title" content="${page.title}" />
+    <meta property="og:description" content="${page.description}" />
+    <meta property="og:url" content="${origin}${page.file}" />
+    <meta property="og:image" content="${origin}assets/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">${organisation}</script>
     <link rel="icon" href="assets/logo-jac.svg" type="image/svg+xml" />
     <link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />

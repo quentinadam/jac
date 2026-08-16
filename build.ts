@@ -7,7 +7,7 @@
  * Run with `deno task build`.
  */
 
-import { render } from './src/site/layout.ts';
+import { origin, render } from './src/site/layout.ts';
 import { pages } from './src/site/pages.ts';
 
 const outputDir = 'dist';
@@ -57,5 +57,17 @@ await copyTree('static', outputDir);
 for (const page of pages) {
   await Deno.writeTextFile(`${outputDir}/${page.file}`, render(page));
 }
+
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${
+  pages
+    .map((page) => `  <url><loc>${origin}${page.file}</loc></url>`)
+    .join('\n')
+}
+</urlset>
+`;
+
+await Deno.writeTextFile(`${outputDir}/sitemap.xml`, sitemap);
 
 console.log(`built ${outputDir}/ — ${pages.length} pages`);
